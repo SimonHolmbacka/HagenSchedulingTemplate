@@ -53,7 +53,6 @@ int nr_schedule=0;
 void *SchedTask(void *p) {
     int corenumber = *((int *)p);
     switch(nr_schedule++){
-//    switch(corenumber){
     case 0:
         cout << "Setting schedule 0 on core " << corenumber << endl;
         set_core_nr(sched0.getTaskSchedule()->peekFirst()->metadata.getCoreNumber());
@@ -169,36 +168,34 @@ int main()
             idx++;
         }
     }
-#if 1
-#if 1
-cout << "items0 "<< TaskList[0].getNrItems() << endl;
-cout << "items1 "<< TaskList[1].getNrItems() << endl;
-cout << "items2 "<< TaskList[2].getNrItems() << endl;
-cout << "items3 "<< TaskList[3].getNrItems() << endl;
-cout << "items4 "<< TaskList[4].getNrItems() << endl;
-cout << "items5 "<< TaskList[5].getNrItems() << endl;
-cout << "items6 "<< TaskList[6].getNrItems() << endl;
-cout << "items7 "<< TaskList[7].getNrItems() << endl;
+
+#if 0
+	    cout << "items0 "<< TaskList[0].getNrItems() << endl;
+	    cout << "items1 "<< TaskList[1].getNrItems() << endl;
+	    cout << "items2 "<< TaskList[2].getNrItems() << endl;
+	    cout << "items3 "<< TaskList[3].getNrItems() << endl;
+	    cout << "items4 "<< TaskList[4].getNrItems() << endl;
+	    cout << "items5 "<< TaskList[5].getNrItems() << endl;
+	    cout << "items6 "<< TaskList[6].getNrItems() << endl;
+	    cout << "items7 "<< TaskList[7].getNrItems() << endl;
 #endif
 
-if(TaskList[0].getNrItems() >= 1)
-    sched0.addTaskSchedule(&TaskList[0]); //Attach task list to schedule
-if(TaskList[1].getNrItems() >= 1)
-    sched1.addTaskSchedule(&TaskList[1]); //Attach task list to schedule
-if(TaskList[2].getNrItems() >= 1)
-    sched2.addTaskSchedule(&TaskList[2]); //Attach task list to schedule
-if(TaskList[3].getNrItems() >= 1)
-    sched3.addTaskSchedule(&TaskList[3]); //Attach task list to schedule
-if(TaskList[4].getNrItems() >= 1)
-    sched4.addTaskSchedule(&TaskList[4]); //Attach task list to schedule
-if(TaskList[5].getNrItems() >= 1)
-    sched5.addTaskSchedule(&TaskList[5]); //Attach task list to schedule
-if(TaskList[6].getNrItems() >= 1)
-    sched6.addTaskSchedule(&TaskList[6]); //Attach task list to schedule
-if(TaskList[7].getNrItems() >= 1)
-    sched7.addTaskSchedule(&TaskList[7]); //Attach task list to schedule
-
-#endif
+	if(TaskList[0].getNrItems() >= 1)
+    	    sched0.addTaskSchedule(&TaskList[0]); //Attach task list to schedule
+	if(TaskList[1].getNrItems() >= 1)
+    	    sched1.addTaskSchedule(&TaskList[1]); //Attach task list to schedule
+	if(TaskList[2].getNrItems() >= 1)
+    	    sched2.addTaskSchedule(&TaskList[2]); //Attach task list to schedule
+	if(TaskList[3].getNrItems() >= 1)
+    	    sched3.addTaskSchedule(&TaskList[3]); //Attach task list to schedule
+	if(TaskList[4].getNrItems() >= 1)
+    	    sched4.addTaskSchedule(&TaskList[4]); //Attach task list to schedule
+	if(TaskList[5].getNrItems() >= 1)
+    	    sched5.addTaskSchedule(&TaskList[5]); //Attach task list to schedule
+	if(TaskList[6].getNrItems() >= 1)
+    	    sched6.addTaskSchedule(&TaskList[6]); //Attach task list to schedule
+	if(TaskList[7].getNrItems() >= 1)
+    	    sched7.addTaskSchedule(&TaskList[7]); //Attach task list to schedule
 
     //Set frequency governor
 #if(ARCH==INTEL)
@@ -222,6 +219,11 @@ if(TaskList[7].getNrItems() >= 1)
     pthread_barrier_init(&barr, NULL, MAXCORES);
 
     //Execute schedules
+
+
+//for(int g=0;g<MAXCORES;g++){
+//cout << "test core nr " << TaskList[g].p
+
     pthread_t schedthread[MAXCORES];
     int arg;
     for(int i=0;i<MAXCORES;i++){
@@ -229,9 +231,10 @@ if(TaskList[7].getNrItems() >= 1)
 	TaskList[i].reverse();
         arg=TaskList[i].peekFirst()->metadata.getCoreNumber();
         if (pthread_create(&schedthread[i], NULL, SchedTask,&arg) != 0) {
-            usleep(1000);
+            usleep(10000);
             std::cerr << "Error in creating thread" << std::endl;
         }
+	usleep(1000);
 	}
     }
 #if 1
@@ -254,9 +257,6 @@ cout << "exiting thread... " << endl;
         cout << "non-serial thread released" << endl;
     }
 #endif
-
-
-    //pthread_join(schedthread, NULL);
 
     cout << "End." << endl;
     exit(0);

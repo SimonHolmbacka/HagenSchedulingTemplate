@@ -23,7 +23,7 @@
 #define LITTLE3 7
 #endif
 
-
+#define VERBOSE 0
 
 
 #endif // SETTINGS_H

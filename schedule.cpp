@@ -21,7 +21,8 @@
 
 using namespace std;
 
-volatile int done[12]={0,0,0,0,0,0,0,0,0,0,0,0};
+volatile int done[MAXCORES] = {0,0,0,0,0,0,0,0};
+
 /* Task types*
  * 1: -Bitbyte (bit manipulation)
  * 2: -Memory+cache
@@ -36,10 +37,7 @@ volatile int done[12]={0,0,0,0,0,0,0,0,0,0,0,0};
  * 11: -Reserved
  */
 
-
-
 volatile double dmemBuf[MEM_SIZE];
-
 
 void *TimerTask(void* arg) { //Arguments: "ID", "Time"
     int *info = (int*)arg;
@@ -53,19 +51,29 @@ void *TimerTask(void* arg) { //Arguments: "ID", "Time"
 }
 
 void IdleTask(int d){
+#if(VERBOSE >=1)
     cout << "Starting task type 0" << endl;
+#elif(VERBOSE == 0)
+    cout << "0" << endl;
+#endif
     //cout << "delay " << d << endl;
     while(--d >= 0){
         usleep(1000); //Sleep one millisecond
     }
+#if(VERBOSE >= 2)
     cout << "Task type 0 done!" << endl;
+#endif
 }
 
-void TaskType1(){ //bitbyte intense
-    cout << "Starting task type 1" << endl;
+void TaskType1(int _core){ //bitbyte intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 1 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "1" << endl;
+#endif
     volatile int x = 0x1ff;
     volatile int y;
-    while (done[1]==0) {
+    while (done[_core]==0) {
 #if(ARCH == ARM)
         asm volatile (
         "ubfx   r0, r1, #3, #4\n"
@@ -115,13 +123,19 @@ void TaskType1(){ //bitbyte intense
         y = x & 0x6;
 #endif
     }
+#if(VERBOSE >= 2)
     cout << "Task type1 done!" << endl;
+#endif
 }
 
-void TaskType2(){ //memory and cache intense
-    cout << "Starting task type 2" << endl;
+void TaskType2(int _core){ //memory and cache intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 2 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "2" << endl;
+#endif
     int index = 0;
-    while (done[2]==0) {
+    while (done[_core]==0) {
 
         index = (index + 14564) % MEM_SIZE;
         dmemBuf[index] = dmemBuf[index];
@@ -136,13 +150,19 @@ void TaskType2(){ //memory and cache intense
         dmemBuf[index] = dmemBuf[index];
 
     }
+#if(VERBOSE >= 2)
     cout << "Task type 2 done!" << endl;
+#endif
 }
 
 #if(ARCH==ARM)
-void TaskType3(){ //Branch heavy
-    cout << "Starting task type 3" << endl;
-    while (done[3]==0) {
+void TaskType3(int _core){ //Branch heavy
+#if(VERBOSE >= 1)
+    cout << "Starting task type 3 on core "<< _core << endl;
+#elif(VERBOSE == 0)
+    cout << "3" << endl;
+#endif
+    while (done[_core]==0) {
     asm volatile (
                 "b    l1\n"
                 "l1: b l2\n"
@@ -170,12 +190,18 @@ void TaskType3(){ //Branch heavy
                 : // "memory", "q0", "q1" //clobber
                 );
     }
+#if(VERBOSE >= 2)
     cout << "Task type 3 done!" << endl;
+#endif
 }
 #elif(ARCH == INTEL)
-void* __attribute__((optimize("O0"))) TaskType3(){
-    cout << "Starting task type 3" << endl;
-    while (done[3]==0) {
+void* __attribute__((optimize("O0"))) TaskType3(int _core){
+#if(VERBOSE >= 1)
+    cout << "Starting task type 3 on core "<< _core << endl;
+#elif(VERBOSE == 0)
+    cout << "3" << endl;
+#endif
+    while (done[_core]==0) {
             l1: goto l20;
             l2: goto l19;
             l3: goto l18;
@@ -198,14 +224,20 @@ void* __attribute__((optimize("O0"))) TaskType3(){
             l20: goto l2;
             ende:;
     }
+#if(VERBOSE >= 2)
     cout << "Task type 3 done!" << endl;
+#endif
 }
 #endif
 
 #if(ARCH==ARM)
-void TaskType4(){ //Logic intense
-    cout << "Starting task type 4" << endl;
-    while (done[4]==0) {
+void TaskType4(int _core){ //Logic intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 4 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "4" << endl;
+#endif
+    while (done[_core]==0) {
         asm volatile (
             "and	r4, r3, #1\n"
             "orr	r4, r3, #4\n"
@@ -232,13 +264,21 @@ void TaskType4(){ //Logic intense
             : "memory", "r3", "r4" //clobber
             );
     }
+#if(VERBOSE >= 2)
+    cout << "Task type 4 done!" << endl;
+#endif
+
 }
 #elif(ARCH == INTEL)
 //foo 16 ok
-void TaskType4(){
-    cout << "Starting task type 4" << endl;
+void TaskType4(int _core){
+#if(VERBOSE >= 1)
+    cout << "Starting task type 4 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "4" << endl;
+#endif
     volatile int x;
-    while (done[4]==0) {
+    while (done[_core]==0) {
         x = x & 1;
         x = x | 4;
         x = x & 0xf;
@@ -260,15 +300,21 @@ void TaskType4(){
         x = x & 0xffff;
         x = x | 0xff;
     }
+#if(VERBOSE >= 2)
     cout << "Task type 4 done!" << endl;
+#endif
 }
 #endif
 
 
 #if(ARCH==ARM)
-void TaskType5(){ //Integer add intense
-    cout << "Starting task type 5" << endl;
-    while (done[5]==0) {
+void TaskType5(int _core){ //Integer add intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 5 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "5" << endl;
+#endif
+    while (done[_core]==0) {
         asm volatile (
                 "add	r3, r2, #1\n"
                 "add	r3, r2, #1\n"
@@ -295,13 +341,19 @@ void TaskType5(){ //Integer add intense
                 : "memory", "r2", "r3" //clobber
                 );
     }
+#if(VERBOSE >= 2)
     cout << "Task type 5 done!" << endl;
+#endif
  }
 #elif(ARCH == INTEL)
-void TaskType5(){
-    cout << "Starting task type 5" << endl;
+void TaskType5(int _core){
+#if(VERBOSE >= 1)
+    cout << "Starting task type 5 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "5" << endl;
+#endif
         volatile int x = 0, y = 1, z = 3;
-    while (done[5]==0) {
+    while (done[_core]==0) {
             x+=1;
             y+=2;
             z+=3;
@@ -323,13 +375,19 @@ void TaskType5(){
             x+=9;
             y+=10;
     }
+#if(VERBOSE >= 2)
     cout << "Task type 5 done!" << endl;
+#endif
 }
 #endif
 #if(ARCH==ARM)
-void TaskType6(){ //Floating point mul intense
-    cout << "Starting task type 6" << endl;
-    while (done[6]==0) {
+void TaskType6(int _core){ //Floating point mul intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 6 on core "<< _core << endl;
+#elif(VERBOSE == 0)
+    cout << "6" << endl;
+#endif
+    while (done[_core]==0) {
         asm volatile (
             "fmuld	d24, d26, d23\n"
             "fmuld	d24, d26, d23\n"
@@ -356,13 +414,19 @@ void TaskType6(){ //Floating point mul intense
             : "memory", "d26", "d23", "d24" //clobber
             );
     }
+#if(VERBOSE >= 2)
     cout << "Task type 6 done!" << endl;
+#endif
 }
 #elif(ARCH == INTEL)
-void TaskType6(){ //Floating point mul intense
-    cout << "Starting task type 6" << endl;
+void TaskType6(int _core){ //Floating point mul intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 6 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "6" << endl;
+#endif
     volatile double x = 1.123, y = 0.23, z = 6.32;
-    while (done[6]==0) {
+    while (done[_core]==0) {
         x*=1.121;
         y*=1.122;
         z*=1.123;
@@ -384,14 +448,20 @@ void TaskType6(){ //Floating point mul intense
         x*=1.129;
         y*=1.120;
     }
+#if(VERBOSE >= 2)
     cout << "Task type 6 done!" << endl;
+#endif
 }
 #endif
 
 #if(ARCH==ARM)
-void TaskType7(){ //SIMD mult intense
-    cout << "Starting task type 7" << endl;
-    while (done[7]==0) {
+void TaskType7(int _core){ //SIMD mult intense
+#if(VERBOSE >= 1)
+    cout << "Starting task type 7 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "7" << endl;
+#endif
+    while (done[_core]==0) {
         asm volatile (
             "vrsqrtsq.f32    q2, q3, q0\n"
             "vrsqrtsq.f32    q2, q3, q0\n"
@@ -408,15 +478,21 @@ void TaskType7(){ //SIMD mult intense
             : "memory", "d0", "d1" //clobber
             );
     }
+#if(VERBOSE == 2)
     cout << "Task type 7 done!" << endl;
+#endif
 }
 #elif(ARCH == INTEL)
-void TaskType7(){
-    cout << "Starting task type 7" << endl;
+void TaskType7(int _core){
+#if(VERBOSE >= 1)
+    cout << "Starting task type 7 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "7" << endl;
+#endif
     volatile __m128d vec1;
     volatile __m128d vec2;
     volatile __m128d vec3;
-    while (done[7]==0) {
+    while (done[_core]==0) {
        vec3 = _mm_mul_pd(vec1, vec2);
        vec3 = _mm_mul_pd(vec1, vec2);
        vec3 = _mm_mul_pd(vec1, vec2);
@@ -438,10 +514,12 @@ void TaskType7(){
        vec3 = _mm_mul_pd(vec1, vec2);
        vec3 = _mm_mul_pd(vec1, vec2);
     }
+#if(VERBOSE >= 2)
     cout << "Task type 7 done!" << endl;
+#endif
 }
 #endif
-void* __attribute__((optimize("O0"))) TaskType8(){
+void* __attribute__((optimize("O0"))) TaskType8(int _core){
 
 register float32x4_t fr;
 register float32x4_t fr2;
@@ -542,9 +620,12 @@ fb18 = vdupq_n_f32(36.0);
 fa19 = vdupq_n_f32(37.0);
 fb19 = vdupq_n_f32(38.0);
 fa20 = vdupq_n_f32(39.0);
-
-    cout << "Starting task type 8" << endl;
-    while (done[8]==0) {
+#if(VERBOSE >= 1)
+    cout << "Starting task type 8 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "8" << endl;
+#endif
+    while (done[_core]==0) {
         fr = vrsqrtsq_f32(fa,fb);
         fr2 = vrsqrtsq_f32(fa2,fb2);
         fr3 = vrsqrtsq_f32(fa3,fb3);
@@ -568,15 +649,23 @@ fa20 = vdupq_n_f32(39.0);
         fr20 = vrsqrtsq_f32(fa20,fb20);
 
   }
+#if(VERBOSE == 2)
   cout << "Task type 8 done!" << endl;
+#endif
 }
-void* __attribute__((optimize("O0"))) TaskType9(){
+void* __attribute__((optimize("O0"))) TaskType9(int _core){
+#if(VERBOSE >= 1)
+  cout << "Starting task type 9 on core " << _core << endl;
+#elif(VERBOSE == 0)
+    cout << "9" << endl;
+#endif
+
   #define SIZE 1
   int m, n, p, q, c, d, k, sum = 0;
   int first[SIZE][SIZE], second[SIZE][SIZE], multiply[SIZE][SIZE];
   m=SIZE;
   n=SIZE;
-  while (done[9]==0) { 
+  while (done[_core]==0) { 
 
   for (c = 0; c < m; c++)
     for (d = 0; d < n; d++)
@@ -602,8 +691,9 @@ void* __attribute__((optimize("O0"))) TaskType9(){
     }
   }
   }
-
+#if(VERBOSE == 2)
   cout << "Task type 9 done!" << endl;
+#endif
 }
 
 
@@ -626,9 +716,10 @@ list* Schedule::getTaskSchedule(){
     return TASKLIST;
 }
 
-#define SLEEP 1000
+#define SLEEP 10000
+/*Recommended to run with nice --19*/
 void Schedule::execute(){
-    cout << "number of times " <<this->getTaskSchedule()->getNrItems()<<  endl;
+//    cout << "number of times " <<this->getTaskSchedule()->getNrItems()<<  endl;
     list::node* t;
     list::node* Temp;
     pthread_t timerthread;
@@ -647,79 +738,80 @@ void Schedule::execute(){
            Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 1:
-            arg[0] = 1;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType1();
+            TaskType1(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 2:
-            arg[0] = 2;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType2();
+            TaskType2(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 3:
-            arg[0] = 3;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType3();
+            TaskType3(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 4:
-            arg[0] = 4;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType4();
+            TaskType4(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 5:
-            arg[0] = 5;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType5();
+            TaskType5(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 6:
-            arg[0] = 6;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType6();
+            TaskType6(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 7:
-            arg[0] = 7;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType7();
+            TaskType7(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 8:
-            arg[0] = 8;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-	    TaskType8();
+	    TaskType8(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
         case 9:
-            arg[0] = 9;     //Task ID
-            arg[1] = time;  //Task active time
+	    arg[0] = core;
+            arg[1] = time+(SLEEP/1000);  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
             usleep(SLEEP);
-            TaskType9();
+            TaskType9(core);
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
 
         default:
+	    cout << "Invalid task ID" << endl;
             break;
         }
     }
