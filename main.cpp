@@ -17,8 +17,13 @@
 using namespace std;
 
 //Create Cores
-//Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG},{BIG},{LITTLE},{LITTLE},{LITTLE},{LITTLE}};
-Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG},{BIG}};
+Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG},{BIG},{LITTLE},{LITTLE},{LITTLE},{LITTLE}};
+//Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG},{BIG},{LITTLE}};
+//Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG},{BIG}};
+//Core *CoreList = new Core[MAXCORES]{{BIG},{BIG},{BIG}};
+//Core *CoreList = new Core[MAXCORES]{{BIG},{BIG}};
+//Core *CoreList = new Core[MAXCORES]{{BIG}};
+
 
 //Create schedules
 Schedule sched0(0,&CoreList[0]);    //Attach core to schedule
@@ -31,8 +36,8 @@ Schedule sched6(6,&CoreList[6]);    //Attach core to schedule
 Schedule sched7(7,&CoreList[7]);    //Attach core to schedule
 
 int set_core_nr(int core_id) {
-   int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-   if (core_id < 0 || core_id >= num_cores)
+  int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+  if (core_id < 0 || core_id >= num_cores)
       return EINVAL;
 
    cpu_set_t cpuset;
@@ -43,50 +48,12 @@ int set_core_nr(int core_id) {
    return pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
 }
 
+pthread_barrier_t barr;
 int nr_schedule=0;
 void *SchedTask(void *p) {
     int corenumber = *((int *)p);
-#if(GTS==1)
-    int biglittle;
     switch(nr_schedule++){
-    case 0:
-        biglittle = sched0.getTaskSchedule()->peekFirst()->metadata.getCoreType();
-        if(biglittle == BIG)
-            set_core_nr(BIG0);
-        else
-            set_core_nr(LITTLE0);
-        sched0.execute();
-        break;
-    case 1:
-        biglittle = sched1.getTaskSchedule()->peekFirst()->metadata.getCoreType();
-        if(biglittle == BIG)
-            set_core_nr(BIG1);
-        else
-            set_core_nr(LITTLE1);
-        sched1.execute();
-        break;
-    case 2:
-        biglittle = sched2.getTaskSchedule()->peekFirst()->metadata.getCoreType();
-        if(biglittle == BIG)
-            set_core_nr(BIG2);
-        else
-            set_core_nr(LITTLE2);
-        sched2.execute();
-        break;
-    case 3:
-        biglittle = sched3.getTaskSchedule()->peekFirst()->metadata.getCoreType();
-        if(biglittle == BIG)
-            set_core_nr(BIG3);
-        else
-            set_core_nr(LITTLE3);
-        sched3.execute();
-        break;
-    default:
-        cout << "Schedule not supported" << endl;
-        break;
-    }
-#else
-    switch(nr_schedule++){
+//    switch(corenumber){
     case 0:
         cout << "Setting schedule 0 on core " << corenumber << endl;
         set_core_nr(sched0.getTaskSchedule()->peekFirst()->metadata.getCoreNumber());
@@ -131,9 +98,10 @@ void *SchedTask(void *p) {
         cout << "Schedule not supported" << endl;
         break;
     }
-#endif
-cout << "exiting thread... " << endl;
-pthread_exit(NULL);
+cout << "              Shutting down core nr " << corenumber << endl;
+  //pthread_exit(NULL); // will cause segfault sometimes
+  //return 0;	// will cause segfault sometimes
+  //return NULL; // will cause segfault sometimes
 }
 
 int main()
@@ -142,8 +110,7 @@ int main()
     for(int i=0;i<MAXCORES;i++) numTasks[i] = 0;
 
     ifstream taskcount[MAXCORES];
-    //string path = "C:/Users/Simon/Dropbox/HagenShare/Cpp_TaskTemplate/sched/sched";
-    string path = "/root/Desktop/Dropbox/HagenShare/Cpp_TaskTemplate/sched/sched";
+    string path = "./sched/sched";
     string txt = ".txt";
 
     //Count the number of tasks in each schedule
@@ -173,7 +140,6 @@ int main()
         list::node* Tasks[numTasks[i]];
         MetaData Metas[numTasks[i]];
         string line;
-
         int idx = 0;
         while(getline(ifs[i], line)){
             istringstream iss(line);
@@ -184,7 +150,7 @@ int main()
             int ctype;
             int cnum;
             iss >> tname >> ttype >> exec >> freq >> ctype >> cnum;
-    #if 1
+
             //cout << "col 1 is " << tname << endl;
             //cout << "col 2 is " << ttype << endl;
             //cout << "col 3 is " << exec << endl;
@@ -192,7 +158,6 @@ int main()
             //cout << "col 5 is " << ctype << endl;
             //cout << "col 6 is " << cnum << endl;
 
-    #endif
             Tasks[idx] = TaskList[i].initNode(tname, idx+1); //name and ID
             Metas[idx].setTaskType(ttype);
             Metas[idx].setExecutionTimeMs(exec);
@@ -205,14 +170,32 @@ int main()
         }
     }
 #if 1
+#if 1
+cout << "items0 "<< TaskList[0].getNrItems() << endl;
+cout << "items1 "<< TaskList[1].getNrItems() << endl;
+cout << "items2 "<< TaskList[2].getNrItems() << endl;
+cout << "items3 "<< TaskList[3].getNrItems() << endl;
+cout << "items4 "<< TaskList[4].getNrItems() << endl;
+cout << "items5 "<< TaskList[5].getNrItems() << endl;
+cout << "items6 "<< TaskList[6].getNrItems() << endl;
+cout << "items7 "<< TaskList[7].getNrItems() << endl;
+#endif
 
+if(TaskList[0].getNrItems() >= 1)
     sched0.addTaskSchedule(&TaskList[0]); //Attach task list to schedule
+if(TaskList[1].getNrItems() >= 1)
     sched1.addTaskSchedule(&TaskList[1]); //Attach task list to schedule
+if(TaskList[2].getNrItems() >= 1)
     sched2.addTaskSchedule(&TaskList[2]); //Attach task list to schedule
+if(TaskList[3].getNrItems() >= 1)
     sched3.addTaskSchedule(&TaskList[3]); //Attach task list to schedule
+if(TaskList[4].getNrItems() >= 1)
     sched4.addTaskSchedule(&TaskList[4]); //Attach task list to schedule
+if(TaskList[5].getNrItems() >= 1)
     sched5.addTaskSchedule(&TaskList[5]); //Attach task list to schedule
+if(TaskList[6].getNrItems() >= 1)
     sched6.addTaskSchedule(&TaskList[6]); //Attach task list to schedule
+if(TaskList[7].getNrItems() >= 1)
     sched7.addTaskSchedule(&TaskList[7]); //Attach task list to schedule
 
 #endif
@@ -236,58 +219,46 @@ int main()
     system(setfreq.c_str());
 #endif
 
+    pthread_barrier_init(&barr, NULL, MAXCORES);
+
     //Execute schedules
-    pthread_t schedthread;
+    pthread_t schedthread[MAXCORES];
     int arg;
     for(int i=0;i<MAXCORES;i++){
-        usleep(1000);
+	if(TaskList[i].getNrItems() >= 1){
+	TaskList[i].reverse();
         arg=TaskList[i].peekFirst()->metadata.getCoreNumber();
-        if (pthread_create(&schedthread, NULL, SchedTask,&arg) != 0) {
+        if (pthread_create(&schedthread[i], NULL, SchedTask,&arg) != 0) {
+            usleep(1000);
             std::cerr << "Error in creating thread" << std::endl;
         }
+	}
     }
-
-    pthread_join(schedthread, NULL);
-    cout << "End." << endl;
-    exit(0);
-    while(1){
-        sleep(1);
+#if 1
+    void* retval;
+    for(int i=0;i<MAXCORES;i++){
+	pthread_join(schedthread[i], &retval);
     }
+#endif
 
 #if 0
-    /*
-     * TEST CASES
-     */
-    //Testing cores
-    cout << "Core type is: " << CoreList[0].getType() << endl;
-    cout << "Core type is: " << CoreList[1].getType() << endl;
-    //Testing task schedule
-    cout << "Testing core on schedule: "<< sched0.getCore().getType() << endl;
-    cout << "Testing core on schedule: "<< sched1.getCore().getType() << endl;
-    cout << "Testing task list " << sched0.getTaskSchedule()->peekFirst()->id << endl;
-    cout << "Testing task list " << sched0.getTaskSchedule()->peekFirst()->name << endl;
-    //Testing task parameters
-    cout << "Getting the first task from FIFO " << endl;
-    cout << "It is Task id: "<< TaskList[0].peekFirst()->id << endl;
-    cout << "It has Freq meta data: " << TaskList[0].peekFirst()->metadata.getFrequencyKHz() << endl;
-    cout << "It has Exec meta data: " << TaskList[0].peekFirst()->metadata.getExecutionTimeMs() << endl;
-    cout << "Core type is: " << TaskList[0].peekFirst()->metadata.getCoreType() <<endl;
-    cout << "Now we take it from the queue" << endl;
-    list::node* TempTask1 = TaskList[0].popFirst();
-    cout << "Getting the first task from FIFO " << endl;
-    cout << "It is Task id: "<< TaskList[0].peekFirst()->id << endl;
-    cout << "It has Freq meta data: " << TaskList[0].peekFirst()->metadata.getFrequencyKHz() << endl;
-    cout << "It has Exec meta data: " << TaskList[0].peekFirst()->metadata.getExecutionTimeMs() << endl;
-    cout << "Now we take it from the queue" << endl;
-    list::node* TempTask2 = TaskList[0].popFirst();
-    cout << "Getting the first task from FIFO " << endl;
-    cout << "It is Task id: "<< TaskList[1].peekFirst()->id << endl;
-    cout << "It has Freq meta data: " << TaskList[1].peekFirst()->metadata.getFrequencyKHz() << endl;
-    cout << "It has Exec meta data: " << TaskList[1].peekFirst()->metadata.getExecutionTimeMs() << endl;
-    cout << "Now we take it from the queue" << endl;
-    list::node* TempTask3 = TaskList[1].popFirst();
-    cout << "Done!" << endl;
+cout << "exiting thread... " << endl;
+    int res = pthread_barrier_wait(&barr);
+    if(res == PTHREAD_BARRIER_SERIAL_THREAD) {
+        // this is the unique "serial thread"; you can e.g. combine some results here
+    } else if(res != 0) {
+        // error occurred
+        cout << "Error in barrier!" << endl;
+    } else {
+        // non-serial thread released
+        cout << "non-serial thread released" << endl;
+    }
 #endif
+
+
+    //pthread_join(schedthread, NULL);
+
+    cout << "End." << endl;
     exit(0);
     return 0;
 }

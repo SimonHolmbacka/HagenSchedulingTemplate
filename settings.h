@@ -7,9 +7,9 @@
 #define ARM 2
 
 /*User defined settings*/
-#define ARCH INTEL
-#define MAXCORES 4
-#define GTS 0
+#define ARCH ARM
+#define MAXCORES 8
+#define GTS 1
 /*End user defined settings*/
 
 #if (GTS==1)

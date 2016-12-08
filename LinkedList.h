@@ -19,7 +19,7 @@ public:
     } *head, *tail, *ptr;
 
     list():head(NULL),tail(NULL){
-        nr_items = 1;
+        nr_items = 0;
     }	// constructor
     ~list();			// destructor
 

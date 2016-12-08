@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
-QMAKE_CXXFLAGS += -std=c++11 -mssse3 -msse4.1 -mssse3 -msse3 -msse2 -msse
+QMAKE_CXXFLAGS += -std=c++11 -mfpu=neon
 LIBS += -pthread
 SOURCES += main.cpp \
     LinkedList.cpp \

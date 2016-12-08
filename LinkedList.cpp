@@ -49,6 +49,7 @@ void list::addNode( struct node *newNode )  {
     tail->next = newNode;
     newNode->next = NULL;
     tail = newNode;
+    incItems();
 }
 
 void list::addLast( struct node *newnode ) {
@@ -58,6 +59,7 @@ void list::addLast( struct node *newnode ) {
        head = newnode;                      // set 'head' to it
        tail = newnode;
        head->next = NULL;                   // set end of list to NULL
+       incItems();
        return;
    }
 
@@ -129,7 +131,7 @@ struct list::node* list::popFirst()
     struct node *temp;
     temp = head;
     head = head->next;
-    return head;
+    return temp;
 }
 
 

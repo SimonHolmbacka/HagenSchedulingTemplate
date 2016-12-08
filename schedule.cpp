@@ -37,25 +37,28 @@ volatile int done[12]={0,0,0,0,0,0,0,0,0,0,0,0};
  */
 
 
+
 volatile double dmemBuf[MEM_SIZE];
 
 
 void *TimerTask(void* arg) { //Arguments: "ID", "Time"
     int *info = (int*)arg;
-    //cout << "id " << info[0] << " time " << info[1] << endl;
+    //cout << "TIMER: id " << info[0] << " time " << info[1] << endl;
     done[info[0]] = 0;
-    //cout << "done is now " << done[info[0]] << endl;
+    //cout << "TIMER: done is now " << done[info[0]] << endl;
     usleep(1000*info[1]);
     done[info[0]] = 1;
-    //cout << "done is now " << done[info[0]] << endl;
-    return NULL;
+    //cout << "TIMER: done is now " << done[info[0]] << endl;
+//    return NULL;
 }
 
 void IdleTask(int d){
+    cout << "Starting task type 0" << endl;
     //cout << "delay " << d << endl;
     while(--d >= 0){
         usleep(1000); //Sleep one millisecond
     }
+    cout << "Task type 0 done!" << endl;
 }
 
 void TaskType1(){ //bitbyte intense
@@ -133,7 +136,7 @@ void TaskType2(){ //memory and cache intense
         dmemBuf[index] = dmemBuf[index];
 
     }
-    cout << "Task type2 done!" << endl;
+    cout << "Task type 2 done!" << endl;
 }
 
 #if(ARCH==ARM)
@@ -167,7 +170,7 @@ void TaskType3(){ //Branch heavy
                 : // "memory", "q0", "q1" //clobber
                 );
     }
-    cout << "Task type3 done!" << endl;
+    cout << "Task type 3 done!" << endl;
 }
 #elif(ARCH == INTEL)
 void* __attribute__((optimize("O0"))) TaskType3(){
@@ -195,7 +198,7 @@ void* __attribute__((optimize("O0"))) TaskType3(){
             l20: goto l2;
             ende:;
     }
-    cout << "Task type3 done!" << endl;
+    cout << "Task type 3 done!" << endl;
 }
 #endif
 
@@ -257,13 +260,14 @@ void TaskType4(){
         x = x & 0xffff;
         x = x | 0xff;
     }
-    cout << "Task type4 done!" << endl;
+    cout << "Task type 4 done!" << endl;
 }
 #endif
 
 
 #if(ARCH==ARM)
 void TaskType5(){ //Integer add intense
+    cout << "Starting task type 5" << endl;
     while (done[5]==0) {
         asm volatile (
                 "add	r3, r2, #1\n"
@@ -291,7 +295,7 @@ void TaskType5(){ //Integer add intense
                 : "memory", "r2", "r3" //clobber
                 );
     }
-    cout << "Task type5 done!" << endl;
+    cout << "Task type 5 done!" << endl;
  }
 #elif(ARCH == INTEL)
 void TaskType5(){
@@ -319,11 +323,12 @@ void TaskType5(){
             x+=9;
             y+=10;
     }
-    cout << "Task type5 done!" << endl;
+    cout << "Task type 5 done!" << endl;
 }
 #endif
 #if(ARCH==ARM)
 void TaskType6(){ //Floating point mul intense
+    cout << "Starting task type 6" << endl;
     while (done[6]==0) {
         asm volatile (
             "fmuld	d24, d26, d23\n"
@@ -351,7 +356,7 @@ void TaskType6(){ //Floating point mul intense
             : "memory", "d26", "d23", "d24" //clobber
             );
     }
-    cout << "Task type6 done!" << endl;
+    cout << "Task type 6 done!" << endl;
 }
 #elif(ARCH == INTEL)
 void TaskType6(){ //Floating point mul intense
@@ -379,7 +384,7 @@ void TaskType6(){ //Floating point mul intense
         x*=1.129;
         y*=1.120;
     }
-    cout << "Task type6 done!" << endl;
+    cout << "Task type 6 done!" << endl;
 }
 #endif
 
@@ -388,34 +393,22 @@ void TaskType7(){ //SIMD mult intense
     cout << "Starting task type 7" << endl;
     while (done[7]==0) {
         asm volatile (
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-            "vmul.f64    d0, d1, d2\n"
-
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-            "vmla.f64    d0, d1, d2\n"
-
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
+            "vrsqrtsq.f32    q2, q3, q0\n"
             : // no output
             :  // no input
             : "memory", "d0", "d1" //clobber
             );
     }
-    cout << "Task type7 done!" << endl;
+    cout << "Task type 7 done!" << endl;
 }
 #elif(ARCH == INTEL)
 void TaskType7(){
@@ -445,9 +438,174 @@ void TaskType7(){
        vec3 = _mm_mul_pd(vec1, vec2);
        vec3 = _mm_mul_pd(vec1, vec2);
     }
-    cout << "Task type7 done!" << endl;
+    cout << "Task type 7 done!" << endl;
 }
 #endif
+void* __attribute__((optimize("O0"))) TaskType8(){
+
+register float32x4_t fr;
+register float32x4_t fr2;
+register float32x4_t fr3;
+register float32x4_t fr4;
+register float32x4_t fr5;
+register float32x4_t fr6;
+register float32x4_t fr7;
+register float32x4_t fr8;
+register float32x4_t fr9;
+register float32x4_t fr10;
+register float32x4_t fr1;
+register float32x4_t fr12;
+register float32x4_t fr13;
+register float32x4_t fr14;
+register float32x4_t fr15;
+register float32x4_t fr16;
+register float32x4_t fr17;
+register float32x4_t fr18;
+register float32x4_t fr19;
+register float32x4_t fr20;
+static float32x4_t fa;
+static float32x4_t fb;
+static float32x4_t fa2;
+static float32x4_t fb2;
+static float32x4_t fa3;
+static float32x4_t fb3;
+static float32x4_t fa4;
+static float32x4_t fb4;
+static float32x4_t fa5;
+static float32x4_t fb5;
+static float32x4_t fa6;
+static float32x4_t fb6;
+static float32x4_t fa7;
+static float32x4_t fb7;
+static float32x4_t fa8;
+static float32x4_t fb8;
+static float32x4_t fa9;
+static float32x4_t fb9;
+static float32x4_t fa10;
+static float32x4_t fb10;
+static float32x4_t fa11;
+static float32x4_t fb11;
+static float32x4_t fa12;
+static float32x4_t fb12;
+static float32x4_t fa13;
+static float32x4_t fb13;
+static float32x4_t fa14;
+static float32x4_t fb14;
+static float32x4_t fa15;
+static float32x4_t fb15;
+static float32x4_t fa16;
+static float32x4_t fb16;
+static float32x4_t fa17;
+static float32x4_t fb17;
+static float32x4_t fa18;
+static float32x4_t fb18;
+static float32x4_t fa19;
+static float32x4_t fb19;
+static float32x4_t fa20;
+static float32x4_t fb20;
+fa = vdupq_n_f32(1.0);
+fb = vdupq_n_f32(2.0);
+fa2 = vdupq_n_f32(3.0);
+fb2 = vdupq_n_f32(4.0);
+fa3 = vdupq_n_f32(5.0);
+fb3 = vdupq_n_f32(6.0);
+fa4 = vdupq_n_f32(7.0);
+fb4 = vdupq_n_f32(8.0);
+fa5 = vdupq_n_f32(9.0);
+fb5 = vdupq_n_f32(10.0);
+fa6 = vdupq_n_f32(11.0);
+fb6 = vdupq_n_f32(12.0);
+fa7 = vdupq_n_f32(13.0);
+fb7 = vdupq_n_f32(14.0);
+fa8 = vdupq_n_f32(15.0);
+fb8 = vdupq_n_f32(16.0);
+fa9 = vdupq_n_f32(17.0);
+fb9 = vdupq_n_f32(18.0);
+fa10 = vdupq_n_f32(19.0);
+fb10 = vdupq_n_f32(20.0);
+fa11 = vdupq_n_f32(21.0);
+fb11 = vdupq_n_f32(22.0);
+fa12 = vdupq_n_f32(23.0);
+fb12 = vdupq_n_f32(24.0);
+fa13 = vdupq_n_f32(25.0);
+fb13 = vdupq_n_f32(26.0);
+fa14 = vdupq_n_f32(27.0);
+fb14 = vdupq_n_f32(28.0);
+fa15 = vdupq_n_f32(29.0);
+fb15 = vdupq_n_f32(30.0);
+fa16 = vdupq_n_f32(31.0);
+fb16 = vdupq_n_f32(32.0);
+fa17 = vdupq_n_f32(33.0);
+fb17 = vdupq_n_f32(34.0);
+fa18 = vdupq_n_f32(35.0);
+fb18 = vdupq_n_f32(36.0);
+fa19 = vdupq_n_f32(37.0);
+fb19 = vdupq_n_f32(38.0);
+fa20 = vdupq_n_f32(39.0);
+
+    cout << "Starting task type 8" << endl;
+    while (done[8]==0) {
+        fr = vrsqrtsq_f32(fa,fb);
+        fr2 = vrsqrtsq_f32(fa2,fb2);
+        fr3 = vrsqrtsq_f32(fa3,fb3);
+        fr4 = vrsqrtsq_f32(fa4,fb4);
+        fr5 = vrsqrtsq_f32(fa5,fb5);
+        fr6 = vrsqrtsq_f32(fa6,fb6);
+        fr7 = vrsqrtsq_f32(fa7,fb7);
+        fr8 = vrsqrtsq_f32(fa8,fb8);
+        fr9 = vrsqrtsq_f32(fa9,fb9);
+        fr10 = vrsqrtsq_f32(fa10,fb10);
+
+        fr1 = vrsqrtsq_f32(fa11,fb11);
+        fr12 = vrsqrtsq_f32(fa12,fb12);
+        fr13 = vrsqrtsq_f32(fa13,fb13);
+        fr14 = vrsqrtsq_f32(fa14,fb14);
+        fr15 = vrsqrtsq_f32(fa15,fb15);
+        fr16 = vrsqrtsq_f32(fa16,fb16);
+        fr17 = vrsqrtsq_f32(fa17,fb17);
+        fr18 = vrsqrtsq_f32(fa18,fb18);
+        fr19 = vrsqrtsq_f32(fa19,fb19);
+        fr20 = vrsqrtsq_f32(fa20,fb20);
+
+  }
+  cout << "Task type 8 done!" << endl;
+}
+void* __attribute__((optimize("O0"))) TaskType9(){
+  #define SIZE 1
+  int m, n, p, q, c, d, k, sum = 0;
+  int first[SIZE][SIZE], second[SIZE][SIZE], multiply[SIZE][SIZE];
+  m=SIZE;
+  n=SIZE;
+  while (done[9]==0) { 
+
+  for (c = 0; c < m; c++)
+    for (d = 0; d < n; d++)
+	first[c][d]=2;
+
+  p=SIZE;
+  q=SIZE;
+  if (n != p)
+    printf("Matrices with entered orders can't be multiplied with each other.\n");
+  else
+  {
+    for (c = 0; c < p; c++)
+      for (d = 0; d < q; d++)
+         second[c][d] = 2;
+    for (c = 0; c < m; c++) {                                                                                                                          
+      for (d = 0; d < q; d++) {                                                                                                                        
+        for (k = 0; k < p; k++) {                                                                                                                      
+          sum = sum + first[c][k]*second[k][d];                                                                                                        
+        }
+        multiply[c][d] = sum;                                                                                                                          
+        sum = 0;                                                                                                                                       
+      }
+    }
+  }
+  }
+
+  cout << "Task type 9 done!" << endl;
+}
+
 
 Schedule::Schedule(int id, Core* obj)
 {
@@ -467,19 +625,22 @@ void Schedule::addTaskSchedule(list* l){
 list* Schedule::getTaskSchedule(){
     return TASKLIST;
 }
+
+#define SLEEP 1000
 void Schedule::execute(){
-    //cout << "number of times " <<this->getTaskSchedule()->getNrItems()<<  endl;
+    cout << "number of times " <<this->getTaskSchedule()->getNrItems()<<  endl;
     list::node* t;
     list::node* Temp;
     pthread_t timerthread;
     int arg[2];
+    int sret;
     while(this->getTaskSchedule()->getNrItems() > 0){
         t = this->getTaskSchedule()->peekFirst();
         int time = t->metadata.getExecutionTimeMs();
         int freq = t->metadata.getFrequencyKHz();
         int core = t->metadata.getCoreNumber();
         string setfreq = "echo "+std::to_string(freq)+" > /sys/devices/system/cpu/cpu"+std::to_string(core)+"/cpufreq/scaling_setspeed";
-        system(setfreq.c_str());    //Set clock frequency for task
+        sret = system(setfreq.c_str());    //Set clock frequency for task
         switch (t->metadata.getTaskType()) {
         case 0:
            IdleTask(time);
@@ -489,7 +650,7 @@ void Schedule::execute(){
             arg[0] = 1;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType1();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -497,7 +658,7 @@ void Schedule::execute(){
             arg[0] = 2;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType2();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -505,7 +666,7 @@ void Schedule::execute(){
             arg[0] = 3;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType3();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -513,7 +674,7 @@ void Schedule::execute(){
             arg[0] = 4;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType4();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -521,7 +682,7 @@ void Schedule::execute(){
             arg[0] = 5;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType5();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -529,7 +690,7 @@ void Schedule::execute(){
             arg[0] = 6;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType6();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
@@ -537,10 +698,27 @@ void Schedule::execute(){
             arg[0] = 7;     //Task ID
             arg[1] = time;  //Task active time
             if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
-            usleep(1000);
+            usleep(SLEEP);
             TaskType7();
             Temp = this->getTaskSchedule()->popFirst(); //Destroy task
             break;
+        case 8:
+            arg[0] = 8;     //Task ID
+            arg[1] = time;  //Task active time
+            if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
+            usleep(SLEEP);
+	    TaskType8();
+            Temp = this->getTaskSchedule()->popFirst(); //Destroy task
+            break;
+        case 9:
+            arg[0] = 9;     //Task ID
+            arg[1] = time;  //Task active time
+            if (pthread_create(&timerthread, NULL, TimerTask,arg) != 0) std::cerr << "Error in creating thread" << std::endl;
+            usleep(SLEEP);
+            TaskType9();
+            Temp = this->getTaskSchedule()->popFirst(); //Destroy task
+            break;
+
         default:
             break;
         }
